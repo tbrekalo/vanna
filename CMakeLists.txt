@@ -1,0 +1,24 @@
+cmake_minimum_required(VERSION 3.19)
+project(vanna VERSION 0.0.1 LANGUAGES CXX)
+
+
+# build specification
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+
+# c++ config
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED)
+list(APPEND CMAKE_CXX_FALGS "-Wall -Wextra -pedantic")
+
+
+# target
+set(${PROJECT_NAME}_SOURCES
+  ${PROJECT_SOURCE_DIR}/src/vanna/memory_resource.cxx
+)
+
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES})
