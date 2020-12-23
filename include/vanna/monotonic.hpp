@@ -1,9 +1,11 @@
-#ifndef VANNA_MONOTONIC_ALLOCATOR_HPP_
-#define VANNA_MONOTNOIC_ALLOCATOR_HPP_
+#ifndef VANNA_MONOTONIC_HPP_
+#define VANNA_MONOTONIC_HPP_
 
 #include <utility>
 #include <limits>
 #include <new>
+
+#include <iostream>
 
 #include "vanna/byte.hpp"
 
@@ -26,7 +28,7 @@ public:
 private:
   struct chunk {
     chunk* prev;
-    chunk* init(chunk* const curr);
+    void init(chunk* const curr);
   };
 
   static auto constexpr ALIGN_ = alignof(value_type);
@@ -47,12 +49,13 @@ public:
 
   template <class U> struct rebind { using other = monotonic<U, ChunkSize>; };
 
+  monotonic();
   ~monotonic();
 
-  monotonic(monotonic const&) = delete;
+  monotonic(monotonic const&);
   monotonic& operator=(monotonic const&) = delete;
 
-  monotonic(monotonic&&) = delete;
+  monotonic(monotonic&&) noexcept;
   monotonic& operator==(monotonic&&) = delete;
 
   void swap(monotonic& rhs) noexcept;
@@ -63,7 +66,7 @@ public:
   void release();
 
 private:
-  chunk* curr_chunk_ = nullptr;
+  chunk* curr_chunk_;
   size_type curr_size_;
   byte_pointer_t free_slot_;
 
@@ -71,8 +74,27 @@ private:
 };
 
 template <class T, std::size_t ChunkSize>
+monotonic<T, ChunkSize>::monotonic() : curr_chunk_{nullptr} {
+  allocate_new_chunk();
+}
+
+template <class T, std::size_t ChunkSize>
 monotonic<T, ChunkSize>::~monotonic() {
   release();
+}
+
+template <class T, std::size_t ChunkSize>
+monotonic<T, ChunkSize>::monotonic(monotonic const& rhs) {
+  this = monotonic();
+}
+
+template <class T, std::size_t ChunkSize>
+monotonic<T, ChunkSize>::monotonic(monotonic&& rhs) noexcept {
+  curr_chunk_ = nullptr;
+  curr_size_ = 0;
+  free_slot_ = nullptr;
+
+  swap(rhs);
 }
 
 template <class T, std::size_t ChunkSize>
@@ -93,10 +115,8 @@ bool operator!=(monotonic<U, N> const& lhs, monotonic<V, M> const& rhs) {
 }
 
 template <class T, std::size_t ChunkSize>
-typename monotonic<T, ChunkSize>::chunk*
-monotonic<T, ChunkSize>::chunk::init(chunk* const curr) {
-  prev->curr_chunk;
-  return curr;
+void monotonic<T, ChunkSize>::chunk::init(chunk* const curr) {
+  prev = curr;
 }
 
 template <class T, std::size_t ChunkSize>
@@ -136,14 +156,17 @@ monotonic<T, ChunkSize>::allocate(size_type const n_bytes) {
 }
 
 template <class T, std::size_t ChunkSize>
+void monotonic<T, ChunkSize>::deallocate(pointer p, size_type const n_bytes) {}
+
+template <class T, std::size_t ChunkSize>
 void monotonic<T, ChunkSize>::release() {
   while (curr_chunk_ != nullptr) {
     auto const next_chunk = curr_chunk_->prev;
-    ::operator delete(next_chunk);
+    ::operator delete(curr_chunk_);
     curr_chunk_ = next_chunk;
   }
 }
 
 } // namespace vanna
 
-#endif /* VANNA_MONOTONIC_ALLOCATOR_HPP_ */
+#endif /*  VANNA_MONOTONIC_HPP_ */

@@ -25,3 +25,6 @@ set(${PROJECT_NAME}_PMR_SOURCES
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_PMR_SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# test
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
