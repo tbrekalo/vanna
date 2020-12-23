@@ -5,13 +5,11 @@
 #include <limits>
 #include <new>
 
-#include <iostream>
-
 #include "vanna/byte.hpp"
 
 namespace vanna {
 
-template <class T, std::size_t ChunkSize> class monotonic {
+template <class T, std::size_t ElementsPerChunk> class monotonic {
 public:
   // member types
   using value_type = T;
@@ -22,7 +20,7 @@ public:
   using void_pointer = void*;
   using const_void_pointer = void const*;
 
-  using size_type = decltype(ChunkSize);
+  using size_type = decltype(ElementsPerChunk);
   using difference_type = std::ptrdiff_t;
 
 private:
@@ -35,11 +33,7 @@ private:
   static auto constexpr HEADER_BYTES_ =
       sizeof(chunk) + (-sizeof(chunk) % ALIGN_);
 
-  static_assert(std::numeric_limits<size_type>::max() - ChunkSize >=
-                    HEADER_BYTES_,
-                "[vana::monotonic] ChunkSize too large.");
-
-  static auto constexpr CHUNK_SIZE_ = ChunkSize + HEADER_BYTES_;
+  static auto constexpr CHUNK_SIZE_ = ElementsPerChunk * sizeof(value_type) + HEADER_BYTES_;
 
 public:
   // incluence on container operations
@@ -47,7 +41,9 @@ public:
   using propagate_on_container_move_assignment = std::false_type;
   using propagate_on_container_swap = std::true_type;
 
-  template <class U> struct rebind { using other = monotonic<U, ChunkSize>; };
+  template <class U> struct rebind {
+    using other = monotonic<U, ElementsPerChunk>;
+  };
 
   monotonic();
   ~monotonic();
@@ -60,7 +56,7 @@ public:
 
   void swap(monotonic& rhs) noexcept;
 
-  pointer allocate(size_type const n_bytes);
+  pointer allocate(size_type const n_elements);
   void deallocate(pointer p, size_type const n_bytes);
 
   void release();
@@ -85,7 +81,7 @@ monotonic<T, ChunkSize>::~monotonic() {
 
 template <class T, std::size_t ChunkSize>
 monotonic<T, ChunkSize>::monotonic(monotonic const& rhs) {
-  this = monotonic();
+  *this = monotonic();
 }
 
 template <class T, std::size_t ChunkSize>
@@ -135,7 +131,8 @@ void monotonic<T, ChunkSize>::allocate_new_chunk() {
 
 template <class T, std::size_t ChunkSize>
 typename monotonic<T, ChunkSize>::pointer
-monotonic<T, ChunkSize>::allocate(size_type const n_bytes) {
+monotonic<T, ChunkSize>::allocate(size_type const n_elements) {
+  auto const n_bytes = n_elements * sizeof(value_type);
   if (n_bytes > CHUNK_SIZE_) {
     throw std::bad_alloc();
   } else if ((-curr_size_ % ALIGN_) > (CHUNK_SIZE_ - curr_size_)) {
