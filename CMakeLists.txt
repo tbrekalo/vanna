@@ -17,8 +17,11 @@ list(APPEND CMAKE_CXX_FALGS "-Wall -Wextra -pedantic")
 
 
 # target
-set(${PROJECT_NAME}_SOURCES
-  ${PROJECT_SOURCE_DIR}/src/vanna/memory_resource.cxx
+set(${PROJECT_NAME}_PMR_SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/pmr/memory_resource.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/pmr/monotonic_buffer.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/pmr/new_delete_resource.cxx
 )
 
-add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES})
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_PMR_SOURCES})
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
