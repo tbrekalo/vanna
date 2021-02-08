@@ -1,6 +1,8 @@
-.vscode
+.ccls-cache
 .cache
+.vscode
+
+Debug
 build
 
 compile_commands.json
-.clangd

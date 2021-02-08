@@ -5,7 +5,7 @@ namespace vanna {
 
 enum class byte : unsigned char {};
 
-using byte_pointer_t = byte*;
+using byte_ptr_t = byte*;
 
 }
 

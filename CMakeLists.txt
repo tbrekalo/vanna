@@ -12,18 +12,20 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED)
-list(APPEND CMAKE_CXX_FALGS "-Wall -Wextra -pedantic")
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 
 # target
-set(${PROJECT_NAME}_PMR_SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/pmr/memory_resource.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/pmr/monotonic_buffer.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/pmr/new_delete_resource.cxx
+
+set(${PROJECT_NAME}_SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/resource.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/new_delete.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/monotonic.cxx
 )
 
-add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_PMR_SOURCES})
+
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # test
