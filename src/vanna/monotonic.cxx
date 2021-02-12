@@ -1,7 +1,9 @@
+#include "vanna/detail/macro.hpp"
 #include "vanna/monotonic.hpp"
 #include "vanna/byte.hpp"
 
 #include <algorithm>
+#include <cstddef>
 
 namespace vanna {
 
@@ -18,39 +20,44 @@ monotonic::monotonic(size_type const block_capacity, double const growth_factor)
   expand_block_list(block_capacity);
 }
 
-monotonic::monotonic(monotonic&& rhs) noexcept
-    : block_capacity_(0), growth_factor_(1), curr_block_(nullptr),
-      curr_block_sz_(0) {
-  swap(rhs);
-}
-
-monotonic& monotonic::operator=(monotonic&& rhs) noexcept {
-  return *this = monotonic(std::move(rhs));
-}
-
 void monotonic::swap(monotonic& rhs) {
-  std::swap(block_capacity_, rhs.block_capacity_);
   std::swap(growth_factor_, rhs.growth_factor_);
 
   std::swap(curr_block_, rhs.curr_block_);
   std::swap(curr_block_sz_, rhs.curr_block_sz_);
 }
 
-monotonic::block_info
-monotonic::allocate_block(size_type const requested_capacity) {
-  auto const block_size = requested_capacity + BLOCK_OVERHEAD;
-  auto const mem_ptr =
-      reinterpret_cast<block_ptr>(resource::allocate(requested_capacity, 1));
+monotonic::~monotonic() { release(); }
 
-  return {mem_ptr, block_size};
+void monotonic::release() {
+  auto curr_block = curr_block_;
+  while (curr_block != nullptr) {
+    auto to_delete = curr_block;
+    curr_block = curr_block->prev;
+
+    // TODO: setup upstream
+    // resource::deallocate(reinterpret_cast<byte_ptr>(curr_block),
+    //                      curr_block->capacity, alignof(block));
+    ::operator delete(to_delete);
+  }
+}
+
+monotonic::block_ptr
+monotonic::allocate_block(size_type const requested_capacity) {
+  auto const block_capacity = requested_capacity + BLOCK_OVERHEAD;
+
+  auto const mem_ptr =
+      reinterpret_cast<block_ptr>(::operator new(block_capacity));
+
+  mem_ptr->capacity = block_capacity;
+  return mem_ptr;
 }
 
 void monotonic::expand_block_list(size_type const requested_capacity) {
-  auto const info = allocate_block(requested_capacity * growth_factor_);
+  auto const new_block = allocate_block(requested_capacity * growth_factor_);
   auto const prev_block = curr_block_;
 
-  curr_block_ = info.ptr;
-  block_capacity_ = info.capacity;
+  curr_block_ = new_block;
 
   curr_block_->prev = prev_block;
   curr_block_sz_ = sizeof(block);
@@ -58,13 +65,16 @@ void monotonic::expand_block_list(size_type const requested_capacity) {
 
 monotonic::pointer monotonic::do_allocate(size_type const n_bytes,
                                           size_type const align) {
-  if ((-curr_block_sz_ % align) > block_capacity_ - curr_block_sz_) {
-    expand_block_list(std::max(block_capacity_, n_bytes) * growth_factor_);
+  if ((-curr_block_sz_ % align) > curr_block_->capacity - curr_block_sz_) {
+    expand_block_list(std::max(curr_block_->capacity, n_bytes) *
+                      growth_factor_);
   }
 
   curr_block_sz_ += (-curr_block_sz_ % align);
-  if (n_bytes > block_capacity_ - curr_block_sz_) {
-    expand_block_list(std::max(block_capacity_, n_bytes) * growth_factor_);
+  if (n_bytes > curr_block_->capacity - curr_block_sz_) {
+    expand_block_list(std::max(curr_block_->capacity, n_bytes) *
+                      growth_factor_);
+
     curr_block_sz_ += (-curr_block_sz_ % align);
   }
 
@@ -75,7 +85,11 @@ monotonic::pointer monotonic::do_allocate(size_type const n_bytes,
 }
 
 void monotonic::do_deallocate(pointer ptr, size_type const n_bytes,
-                              size_type const align) {}
+                              size_type const align) {
+  UNUSED(ptr);
+  UNUSED(align);
+  UNUSED(n_bytes);
+}
 
 bool monotonic::do_is_equal(resource const& rhs) const noexcept {
   return this == &rhs;

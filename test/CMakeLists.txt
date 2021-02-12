@@ -3,7 +3,8 @@ find_package(Catch2 REQUIRED)
 add_executable(
   vanna_test
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/monotonic.cxx)
+  ${CMAKE_CURRENT_SOURCE_DIR}/new_delete_test.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/monotonic_test.cxx)
 
 
 target_include_directories(vanna_test PRIVATE ${CATCH_INCLUDE_DIRS})

@@ -15,11 +15,14 @@ public:
   monotonic(size_type const block_capacity);
   monotonic(size_type const block_capacity, double const growth_factor);
 
+  ~monotonic();
+  void release();
+
   monotonic(monotonic const&) = delete;
   monotonic& operator=(monotonic const&) = delete;
 
-  monotonic(monotonic&& rhs) noexcept;
-  monotonic& operator=(monotonic&& rhs) noexcept;
+  monotonic(monotonic&&) = delete;
+  monotonic& operator=(monotonic&&) = delete;
 
   void swap(monotonic& other);
 
@@ -29,20 +32,13 @@ private:
 
   struct block {
     block_ptr prev;
-  };
-
-  struct block_info {
-    block_info(block_ptr const ptr, size_type const capacity)
-        : ptr(ptr), capacity(capacity) {}
-
-    block_ptr ptr;
     size_type capacity;
   };
 
   static auto constexpr BLOCK_OVERHEAD =
-      sizeof(block) + (-sizeof(block) % alignof(std::max_align_t));
+      sizeof(block) + (-sizeof(block) % alignof(block));
 
-  block_info allocate_block(size_type const requested_capacity);
+  block_ptr allocate_block(size_type const requested_capacity);
   void expand_block_list(size_type const requrest_capacity);
 
   pointer do_allocate(size_type const n_bytes, size_type const align) override;
@@ -50,7 +46,6 @@ private:
                      size_type const align) override;
   bool do_is_equal(resource const& rhs) const noexcept override;
 
-  size_type block_capacity_;
   double growth_factor_;
 
   block_ptr curr_block_;
