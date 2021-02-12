@@ -1,9 +1,24 @@
 #include "vanna/monotonic.hpp"
+#include "vanna/default.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 
 namespace vanna {
+
+monotonic::monotonic() : monotonic(get_default(), DEFAULT_BUFF_SZ) {}
+
+monotonic::monotonic(resource* const upstream)
+    : monotonic(upstream, DEFAULT_BUFF_SZ) {}
+
+monotonic::monotonic(size_type const block_capacity)
+    : monotonic(get_default(), DEFAULT_BUFF_SZ) {}
+
+monotonic::monotonic(resource* upstream, size_type const block_capacity)
+    : upstream_(upstream) {
+  expand_block_list(block_capacity, alignof(std::max_align_t));
+}
 
 monotonic::block_info_t monotonic::allocate_block(size_type block_capacity,
                                                   size_type alignment) {
@@ -13,7 +28,7 @@ monotonic::block_info_t monotonic::allocate_block(size_type block_capacity,
 
   auto const capacity = block_capacity + (-block_capacity_ % alignment);
   auto const block_start =
-      reinterpret_cast<block_ptr_t>(::operator new(capacity));
+      reinterpret_cast<block_ptr_t>(upstream_->allocate(capacity, alignment));
 
   return block_info_t(block_start, capacity);
 }
@@ -31,10 +46,6 @@ void monotonic::append_new_block(block_info_t const info) noexcept {
 void monotonic::expand_block_list(size_type const block_capacity,
                                   size_type const alignment) {
   append_new_block(allocate_block(block_capacity, alignment));
-}
-
-monotonic::monotonic(size_type const block_capacity) {
-  expand_block_list(block_capacity, alignof(std::max_align_t));
 }
 
 monotonic::~monotonic() { release(); }

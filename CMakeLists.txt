@@ -17,11 +17,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 
 # target
-
 set(${PROJECT_NAME}_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/resource.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/new_delete.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/monotonic.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/vanna/default.cxx
 )
 
 

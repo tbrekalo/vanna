@@ -7,12 +7,15 @@ namespace vanna {
 
 class monotonic : public resource {
 public:
+  static size_type constexpr DEFAULT_BUFF_SZ = 1024; // 1kB
   static size_type constexpr GROWTH_FACTOR = 2;
 
+  monotonic();
+  monotonic(resource* const upstream);
   monotonic(size_type const block_capacity);
-  void release();
+  monotonic(resource* const upstream, size_type const block_capacity);
 
-  // TOOD: constructors and propagation properties
+  void release();
   ~monotonic();
 
 private:
@@ -40,6 +43,8 @@ private:
   virtual void do_deallocate(byte_ptr_t p, size_type n_bytes,
                              size_type const alignment) override;
   virtual bool do_is_equal(resource const& rhs) const noexcept override;
+
+  resource* upstream_;
 
   block_ptr_t curr_block_ = nullptr;
 

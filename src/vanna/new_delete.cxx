@@ -19,16 +19,16 @@ resource* get_new_delete() {
 
 byte_ptr_t new_delete::do_allocate(size_type const n_bytes,
                                    size_type const alignment) {
-
+  return static_cast<byte_ptr_t>(::operator new(n_bytes));
 }
 
 void new_delete::do_deallocate(byte_ptr_t p, size_type n_bytes,
                                size_type const alignment) {
-
-                               }
+  ::operator delete(p);
+}
 
 bool new_delete::do_is_equal(resource const& rhs) const noexcept {
-  return this == &rhs; // TODO: better? Runtime typeinfo
+  return this == &rhs; 
 }
 
 } // namespace vanna
