@@ -10,18 +10,17 @@ namespace vanna {
 class resource {
 public:
   using size_type = std::size_t;
+  using pointer = byte_ptr;
 
-  byte_ptr_t allocate(size_type const n_bytes, size_type const alignment);
-  void deallocate(byte_ptr_t p, size_type const n_bytes,
-                  size_type const alignemt);
-  bool is_equal(resource const& rhs);
+  pointer allocate(size_type const n_bytes, size_type const align);
+  void deallocate(pointer ptr, size_type const n_bytes, size_type const align);
+  bool is_equal(resource const& rhs) const noexcept;
 
 private:
-  virtual byte_ptr_t do_allocate(size_type const n_bytes,
-                                 size_type const alignment) = 0;
-  virtual void do_deallocate(byte_ptr_t p, size_type const n_bytes,
-                             size_type const alignment) = 0;
-  virtual bool do_is_equal(resource const& rhs) const noexcept = 0;
+  virtual pointer do_allocate(size_type const n_bytes, size_type const align);
+  virtual void do_deallocate(pointer ptr, size_type const n_bytes,
+                             size_type const align);
+  virtual bool do_is_equal(resource const& rhs) const noexcept;
 };
 
 } // namespace vanna

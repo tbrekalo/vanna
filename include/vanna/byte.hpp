@@ -1,11 +1,12 @@
 #ifndef VANNA_BYTE_HPP_
 #define VANNA_BYTE_HPP_
 
+#include <cstdint>
+
 namespace vanna {
 
-enum class byte : unsigned char {};
-
-using byte_ptr_t = byte*;
+enum class byte : std::uint8_t {};
+using byte_ptr = byte*;
 
 }
 

@@ -1,11 +1,13 @@
-#include <functional>
-#include <algorithm>
-#include <cstdint>
 #include <vector>
 #include <list>
 #include <set>
-#include <map>
-#include <new>
 
 #include "catch2/catch.hpp"
 
+#include "vanna/monotonic.hpp"
+#include "vanna/allocator.hpp"
+
+TEST_CASE("monotonic resource through allocator",
+          "[vanna][monotonic][resource][allocator]") {
+  auto resource = vanna::monotonic();
+}

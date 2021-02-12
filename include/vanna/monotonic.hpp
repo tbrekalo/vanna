@@ -2,54 +2,59 @@
 #define VANNA_MONOTONIC_HPP_
 
 #include "vanna/resource.hpp"
+#include <cstddef>
 
 namespace vanna {
 
 class monotonic : public resource {
 public:
-  static size_type constexpr DEFAULT_BUFF_SZ = 1024; // 1kB
-  static size_type constexpr GROWTH_FACTOR = 2;
+  static size_type constexpr DEFAULT_BLOCK_CAPACITY = 1024;
+  static double constexpr DEFAULT_GROWTH_FACTOR = 2;
 
   monotonic();
-  monotonic(resource* const upstream);
   monotonic(size_type const block_capacity);
-  monotonic(resource* const upstream, size_type const block_capacity);
+  monotonic(size_type const block_capacity, double const growth_factor);
 
-  void release();
-  ~monotonic();
+  monotonic(monotonic const&) = delete;
+  monotonic& operator=(monotonic const&) = delete;
+
+  monotonic(monotonic&& rhs) noexcept;
+  monotonic& operator=(monotonic&& rhs) noexcept;
+
+  void swap(monotonic& other);
 
 private:
-  struct block_t {
-    block_t* prev;
+  struct block;
+  using block_ptr = block*;
+
+  struct block {
+    block_ptr prev;
   };
 
-  using block_ptr_t = block_t*;
+  struct block_info {
+    block_info(block_ptr const ptr, size_type const capacity)
+        : ptr(ptr), capacity(capacity) {}
 
-  struct block_info_t {
-    block_info_t(block_ptr_t block_start, size_type n_bytes)
-        : block_start(block_start), capacity(n_bytes) {}
-
-    block_ptr_t block_start;
+    block_ptr ptr;
     size_type capacity;
   };
 
-  block_info_t allocate_block(size_type block_capacity, size_type alignment);
-  void append_new_block(block_info_t const info) noexcept;
-  void expand_block_list(size_type const block_capacity,
-                         size_type const alignment);
+  static auto constexpr BLOCK_OVERHEAD =
+      sizeof(block) + (-sizeof(block) % alignof(std::max_align_t));
 
-  virtual byte_ptr_t do_allocate(size_type const n_bytes,
-                                 size_type const alignment) override;
-  virtual void do_deallocate(byte_ptr_t p, size_type n_bytes,
-                             size_type const alignment) override;
-  virtual bool do_is_equal(resource const& rhs) const noexcept override;
+  block_info allocate_block(size_type const requested_capacity);
+  void expand_block_list(size_type const requrest_capacity);
 
-  resource* upstream_;
+  pointer do_allocate(size_type const n_bytes, size_type const align) override;
+  void do_deallocate(pointer ptr, size_type const n_bytes,
+                     size_type const align) override;
+  bool do_is_equal(resource const& rhs) const noexcept override;
 
-  block_ptr_t curr_block_ = nullptr;
-
-  size_type n_bytes_used_ = 0;
   size_type block_capacity_;
+  double growth_factor_;
+
+  block_ptr curr_block_;
+  size_type curr_block_sz_;
 };
 
 } // namespace vanna
