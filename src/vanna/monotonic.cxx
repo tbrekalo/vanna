@@ -1,5 +1,6 @@
 #include "vanna/detail/macro.hpp"
 #include "vanna/monotonic.hpp"
+#include "vanna/default.hpp"
 #include "vanna/byte.hpp"
 
 #include <algorithm>
@@ -7,14 +8,20 @@
 
 namespace vanna {
 
-monotonic::monotonic()
-    : monotonic(DEFAULT_BLOCK_CAPACITY, DEFAULT_GROWTH_FACTOR) {}
+monotonic::monotonic() : monotonic(DEFAULT_BLOCK_CAPACITY) {}
+
+monotonic::monotonic(resource* upstream)
+    : monotonic(upstream, DEFAULT_BLOCK_CAPACITY) {}
 
 monotonic::monotonic(size_type const block_capacity)
-    : monotonic(block_capacity, DEFAULT_GROWTH_FACTOR) {}
+    : monotonic(get_default_resource(), block_capacity) {}
 
-monotonic::monotonic(size_type const block_capacity, double const growth_factor)
-    : growth_factor_(growth_factor) {
+monotonic::monotonic(resource* upstream, size_type const block_capacity)
+    : monotonic(upstream, block_capacity, DEFAULT_GROWTH_FACTOR) {}
+
+monotonic::monotonic(resource* upstream, size_type const block_capacity,
+                     double const growth_factor)
+    : upstream_(upstream), growth_factor_(growth_factor) {
 
   curr_block_ = nullptr;
   expand_block_list(block_capacity);
@@ -35,10 +42,8 @@ void monotonic::release() {
     auto to_delete = curr_block;
     curr_block = curr_block->prev;
 
-    // TODO: setup upstream
-    // resource::deallocate(reinterpret_cast<byte_ptr>(curr_block),
-    //                      curr_block->capacity, alignof(block));
-    ::operator delete(to_delete);
+    upstream_->deallocate(reinterpret_cast<byte_ptr>(to_delete),
+                          to_delete->capacity, alignof(block));
   }
 }
 
@@ -46,8 +51,8 @@ monotonic::block_ptr
 monotonic::allocate_block(size_type const requested_capacity) {
   auto const block_capacity = requested_capacity + BLOCK_OVERHEAD;
 
-  auto const mem_ptr =
-      reinterpret_cast<block_ptr>(::operator new(block_capacity));
+  auto const mem_ptr = reinterpret_cast<block_ptr>(
+      upstream_->allocate(block_capacity, alignof(block)));
 
   mem_ptr->capacity = block_capacity;
   return mem_ptr;

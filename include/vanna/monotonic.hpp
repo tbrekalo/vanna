@@ -12,8 +12,10 @@ public:
   static double constexpr DEFAULT_GROWTH_FACTOR = 2;
 
   monotonic();
+  monotonic(resource* upstream);
   monotonic(size_type const block_capacity);
-  monotonic(size_type const block_capacity, double const growth_factor);
+  monotonic(resource* upstream, size_type const block_capacity);
+  monotonic(resource* upstream, size_type const block_capacity, double const growth_factor);
 
   ~monotonic();
   void release();
@@ -45,6 +47,8 @@ private:
   void do_deallocate(pointer ptr, size_type const n_bytes,
                      size_type const align) override;
   bool do_is_equal(resource const& rhs) const noexcept override;
+
+  resource* upstream_;
 
   double growth_factor_;
 

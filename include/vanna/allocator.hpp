@@ -34,6 +34,10 @@ public:
     using other = allocator<U>;
   };
 
+  template <class U>
+  constexpr allocator(allocator<U> const& rhs) noexcept 
+    : upstream_(rhs.upstream()) {}
+
   allocator(resource* const upstream) : upstream_(upstream) {}
 
   allocator(allocator const& rhs) { upstream_ = rhs.upstream_; }
@@ -45,7 +49,8 @@ public:
   void swap(allocator& rhs) { std::swap(upstream_, rhs.upstream_); }
 
   pointer allocate(size_type const n_objects) {
-    return reinterpret_cast<pointer>(upstream_->allocate(bytes * n_objects, align));
+    return reinterpret_cast<pointer>(
+        upstream_->allocate(bytes * n_objects, align));
   }
 
   void deallocate(pointer p, size_type const n_bytes) {
@@ -53,21 +58,23 @@ public:
                           align);
   }
 
-  template <class LhsT, class RhsT>
-  friend bool operator==(allocator<LhsT> const& lhs,
-                         allocator<RhsT> const& rhs) noexcept {
-    return lhs.upstream_->is_equal(rhs);
-  }
-
-  template <class LhsT, class RhsT>
-  friend bool operator!=(allocator<LhsT> const& lhs,
-                         allocator<RhsT> const& rhs) noexcept {
-    return !(lhs == rhs);
-  }
+  resource* upstream() const noexcept { return upstream_; }
 
 private:
   resource* upstream_;
 };
+
+template <class LhsT, class RhsT>
+bool operator==(allocator<LhsT> const& lhs,
+                allocator<RhsT> const& rhs) noexcept {
+  return lhs.upstream()->is_equal(rhs.upstream());
+}
+
+template <class LhsT, class RhsT>
+bool operator!=(allocator<LhsT> const& lhs,
+                allocator<RhsT> const& rhs) noexcept {
+  return !(lhs == rhs);
+}
 
 } // namespace vanna
 

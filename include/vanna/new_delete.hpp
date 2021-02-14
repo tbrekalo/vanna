@@ -4,14 +4,7 @@
 #include "vanna/resource.hpp"
 namespace vanna {
 
-class new_delete : public resource {
-public:
-private:
-  virtual pointer do_allocate(size_type const n_bytes, size_type const align);
-  virtual void do_deallocate(pointer ptr, size_type const n_bytes,
-                             size_type const align);
-  virtual bool do_is_equal(resource const& rhs) const noexcept;
-};
+resource* get_new_delete();
 
 } // namespace vanna
 
